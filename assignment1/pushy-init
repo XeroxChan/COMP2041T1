@@ -1,0 +1,37 @@
+#!/bin/dash
+
+#######################################################################################################
+# Written by: Yuet Yat (Xerox) Chan					zid: z5289835
+# Date: 10/03/2024
+#
+# Usage: pushy-init
+#
+# pushy-init initialize the basic environment needed for .pushy
+#	.pushy is the super directory to store everything
+#
+#	sub-directories -
+#	--------------- -
+#	./pushy/index   -	to store the ./pushy-add version of file
+#	./pushy/commits -	to store commit related messages and history of versions of files
+#	./pushy/repo	-	to store the latest committed version of file
+#
+######################################################################################################
+
+#if the directory does not exist
+if [ ! -d ".pushy" ]
+then
+	#create directory .pushy
+	mkdir .pushy
+	#create sub-directory .pushy/index
+	mkdir .pushy/index
+	#create sub-directory .pushy/commits
+	mkdir .pushy/commits
+	#create sub-directory .pushy/repo
+	mkdir .pushy/repo
+	#print correct output
+	echo "Initialized empty pushy repository in .pushy"
+else
+#error message
+	echo "pushy-init: error: .pushy already exists"
+	exit 1
+fi

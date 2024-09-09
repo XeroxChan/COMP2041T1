@@ -1,0 +1,117 @@
+#!/bin/dash
+
+#######################################################################################
+# Written by: Yuet Yat (Xerox) Chan					zid: z5289835
+# Date: 10/03/2024
+#
+# Stage 0:
+# Usage: pushy-commit -m <commit message>
+#
+# Pushy-commit commits files in the index directory to the repo directory and create
+# a record of commits and commmit message in the commit directory
+#######################################################################################
+
+#if directory .pushy is not created
+if [ ! -d ".pushy" ]
+then
+	echo "pushy-add: error: pushy repository directory .pushy not found"
+	exit 1
+fi
+
+##########
+#get flag#
+##########
+
+while getopts "am" flag;do
+	case "$flag" in
+		#option -m
+		m)
+			;;
+		#option -a
+		a)
+			#all files already in the index to have their contents from the current directory added to the index before the commit
+			for current_files in *
+			do
+				for index_files in .pushy/index/*
+				do
+					if [ .pushy/index/"$current_files" = "$index_files" ]
+					then
+						cp "$current_files" .pushy/index/
+					fi
+				done
+			done
+			;;
+		?)
+			echo "usage: pushy-commit [-a] -m commit-message"
+			exit 1
+			;;
+	esac
+done
+
+#indicate changes
+change=0
+
+#################################
+#copy all files in index to repo#
+#################################
+
+files_in_index_dir=$(ls .pushy/index)
+
+for file in $files_in_index_dir
+do
+	#check if any of the files had already been commited before
+	#i.e files in index already exists in the repo sub-directory
+	if [ -f ".pushy/repo/$file"  ]
+	then
+		#check if the file has any difference
+		if cmp -s  ".pushy/index/$file" ".pushy/repo/$file"
+		then
+			#files are identical
+			continue
+		else
+			#files are different, modify the change variable
+			change=1
+		fi
+		#remove the old version of the file
+		rm ".pushy/repo/$file"
+		
+	else
+	#1 or more files does not exist in the repo, something has changed
+		change=1
+	fi
+	#update repo
+	cp ".pushy/index/$file" ".pushy/repo/$file"
+done
+
+#no changes to be commited
+if [ $change -eq 0 ]
+then
+	echo "nothing to commit"
+	exit 1
+else
+##############
+#commit order#
+##############
+	#set commit order
+	#it is the number of directories in the .pushy/commits directory
+	commit_order=$(ls -l .pushy/commits | grep -Ec "^d")
+	#create a directory for the cuurent commit
+	mkdir .pushy/commits/"$commit_order"
+
+	#get the commit message
+	for commit_message; do : ; done
+	#write commit message to the respective commit order directory
+	echo "$commit_message" > ".pushy/commits/$commit_order/message"
+
+	echo "Committed as commit $commit_order"
+
+	#copy current version of all files to this commit directory
+	if [ "$(find .pushy/index | wc -l)" -ne 0 ]
+	then
+		cp .pushy/index/* .pushy/commits/"$commit_order"/
+	fi
+fi
+
+
+
+

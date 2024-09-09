@@ -1,0 +1,72 @@
+#!/bin/dash
+
+######################################################################################
+# Written by: Yuet Yat (Xerox) Chan					zid: z5289835
+# Date: 10/03/2024
+#
+# Usage: pushy-add <files>
+#
+# Pushy-rm removes a file from the index, or, from the current directory and the index.
+#If the --cached option is specified, the file is removed only from the index, and not from the current directory.
+#
+#pushy-rm, like git rm, should stop the user accidentally losing work, and should give an error message instead 
+#if the removal would cause the user to lose work.
+#
+#The --force option overrides this, and will carry out the removal even if the user will lose work.
+#
+#######################################################################################
+
+
+#if directory .pushy is not created
+if [ ! -d ".pushy" ]
+then
+	echo "pushy-add: error: pushy repository directory .pushy not found"
+	exit 1
+fi
+
+#initialise flag options
+cached=false
+force=false
+
+#transform long options to short options for getopts
+for arg in "$@"
+do
+	shift
+	case "$arg" in
+		"--cached") 
+				set -- "$@" "-c"  ;;
+		"--force") 
+				set -- "$@" "-f"  ;;
+		*)	    
+				set -- "$@" "$arg";;
+	esac
+done
+
+while getopts "cf" options
+do
+	case "$options" in 
+		"c")
+			cached=true 	;;
+		"f")
+			force=true	;;
+		#wrong usage of pushy-rm
+		"?")
+			echo "usage: pushy-rm [--force] [--cached] <filenames>"
+			exit 1		;;
+	esac	
+done
+
+for file in "$@"
+do
+	#avoid options as file
+	if [ "$(echo "$file" | cut -c1-1)" != '-' ]
+	then
+		#remove from index
+		rm .pushy/index/"$file"
+		# if cached is not specified, remove from current directory
+		if [ -f "$file" ] && ! $cached
+		then
+			rm "$file"
+		fi
+	fi
+done

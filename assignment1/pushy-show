@@ -1,0 +1,65 @@
+#!/bin/dash
+
+#######################################################################################
+# Written by: Yuet Yat (Xerox) Chan					zid: z5289835
+# Date: 10/03/2024
+#
+# Usage: pushy-show [commit]:filename
+#
+# Pushy-show print the content of the specified filename as of the specified commit
+# If commit is ommited, the contents of the file in the index should be printed
+#######################################################################################
+
+
+#if directory .pushy is not created
+if [ ! -d ".pushy" ]
+then
+	echo "pushy-show: error: pushy repository directory .pushy not found"
+	exit 1
+fi
+
+#if number of argument incorrect
+if [ $# -ne 1 ]
+then
+	echo "usage: pushy-show <commit>:<filename>"
+	exit 1 
+fi
+
+commits=$1
+#get the commit order
+commit_order=$(echo "$commits" | cut -d":" -f1)
+#get the file name
+filename=$(echo "$commits" | cut -d":" -f2)
+
+
+#if commit order not found in commits dir
+if [ ! -d .pushy/commits/"$commit_order" ]
+then
+	echo "$0: error: unknown commit '$commit_order'"
+	exit 1
+fi
+
+#if commit_order is an empty string
+#then the contents of the file in the index should be printed
+if [ "$commit_order" = "" ] 
+then
+    #if file not found in index
+	if [ ! -f .pushy/index/"$filename" ]
+	then
+		echo "$0: error: '$filename' not found in index"
+		exit 1
+	
+    else	
+        cat .pushy/index/"$filename"
+	exit 0
+	fi
+fi
+
+#if file not found in commits 
+if [ ! -f .pushy/commits/"$commit_order"/"$filename" ] 
+then 
+	echo "$0: error: '$filename' not found in commit $commit_order"
+	exit 1
+else
+	cat .pushy/commits/"$commit_order"/"$filename"
+fi

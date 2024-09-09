@@ -1,0 +1,33 @@
+#!/bin/dash
+
+#######################################################################################
+# Written by: Yuet Yat (Xerox) Chan					zid: z5289835
+# Date: 10/03/2024
+#
+# Usage: pushy-log
+#
+# Pushy-log prints all the commits
+#######################################################################################
+
+#if directory .pushy is not created
+if [ ! -d ".pushy" ]
+then
+	echo "pushy-log: error: pushy repository directory .pushy not found"
+	exit 1
+fi
+
+#if the commit directory is empty
+if [ "$(ls .pushy/commits/ | wc -l)" -eq 0 ]
+then
+	echo "pushy-log: error: your repository does not have any commits yet"
+	exit 1
+fi
+
+#get commits in reverse order i.e from new to old
+commit_order=$(ls .pushy/commits/ | sort -r)
+
+#print all commits
+for commits in $commit_order
+do
+	echo "$commits" "$(cat .pushy/commits/"$commits"/message)"
+done

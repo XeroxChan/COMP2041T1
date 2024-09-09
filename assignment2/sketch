@@ -1,0 +1,245 @@
+#! /usr/bin/env python3
+
+import sys
+import re
+import argparse
+
+#modified version of argparse to silence its own error message
+class SilentArgumentParser(argparse.ArgumentParser):
+	def error(self, message):
+		#error message when no command
+        	raise SystemExit('usage = eddy [-h] [-n] [-f] [-i] command [command ...]')
+
+# Function to parse command-line arguments
+def parse_arguments():
+	#using customised argparser
+	parser = SilentArgumentParser()
+	#flags
+	parser.add_argument('-n', action = 'store_true')
+	parser.add_argument('-f', action = 'store_true')
+	#commands
+	parser.add_argument('command', nargs='+', type = str)
+	try:
+		args = parser.parse_args()
+		return args.n, args.f, args.command
+	except SystemExit as e:
+		#print error meesage
+		print(e)
+		exit(1)
+
+# Function to parse multiple lines of command seperated by ; or \n
+def parse_commands(commands):
+	parsed_commands = []
+	for command in commands:
+		#if ; or \n is present, split them into subparts
+		if re.search(r'[;\n]', command) != None:
+			splitted_commands = re.split(r'[;\n]+', command)
+			#append the subparts to the parsed_commands after checking it is not an empty string and removing white spaces
+			for cmd in splitted_commands:
+				if cmd != '':
+					cmd = cmd.rstrip()
+					parsed_commands.append(cmd)
+		else:
+			parsed_commands.append(command)
+	return parsed_commands
+
+def get_files(files):
+	result = []
+	for filename in files:
+		result.append(filename)
+	return result
+
+#Function to get commands from files
+def get_content(files):
+	content = []
+	for file in files:
+		with open(file, "r") as f:
+			for line in f:
+				content.append(line.strip())
+	content.append('EOF')
+	return content
+
+#Function to obtain regex between '/'
+def process_command(command):
+	split_command = command.split('/')
+	return split_command
+	
+#quit command
+def q(n_option, command, result, times):
+	#read content from sys.stdin
+	if times == 0:
+		time += 1
+		#number quit
+		if len(command) == 2:
+			i = 0
+			quit_length = command.strip('q')
+			for line in sys.stdin:
+				if i < int(quit_length):
+					if n_option == False:
+						result += line
+				else:
+					break
+				i += 1
+		#regex quit
+		else:
+			processed_command = process_command(command)
+			for line in sys.stdin:
+				if re.search(fr'{processed_command[1]}', line):
+					if n_option == False:
+						result += line
+						break
+				else:
+					if n_option == False:
+						result += line
+	#read content from result
+	else:
+		#number quit
+		if len(command) == 2:
+			i = 0
+			quit_length = command.strip('q')
+			for line in result:
+				if i < int(quit_length):
+					if n_option == False:
+						result += line
+				else:
+					break
+				i += 1
+		#regex quit
+		else:
+			processed_command = process_command(command)
+			for line in result:
+				if re.search(fr'{processed_command[1]}', line):
+					if n_option == False:
+						result += line
+						break
+				else:
+					if n_option == False:
+						result += line
+		
+	return result
+	
+#print command
+def p(n_option, command, result, times):
+	if times == 0:
+		#number print
+		if len(command) == 2:
+			print_target = int(command.strip('p'))
+			#print(print_target)
+			i = 1
+			for line in sys.stdin:
+				if n_option == False:
+					result += line
+					if i == print_target:
+						result += line
+				if n_option == True:
+					if i == print_target:
+						result += line
+				i += 1
+		#regex print		
+		else:
+			processed_command = process_command(command)
+			for line in sys.stdin:
+				if re.search(fr'{processed_command[1]}', line):
+					result += line
+					if n_option == False:
+						result += line
+				else:
+					if n_option == False:
+						result += line
+	#read from result
+	else:
+		#number print
+		if len(command) == 2:
+			print_target = int(command.strip('p'))
+			#print(print_target)
+			i = 1
+			for line in result:
+				if n_option == False:
+					result += line
+					if i == print_target:
+						result += line
+				if n_option == True:
+					if i == print_target:
+						result += line
+				i += 1
+		#regex print		
+		else:
+			processed_command = process_command(command)
+			for line in result:
+				if re.search(fr'{processed_command[1]}', line):
+					result += line
+					if n_option == False:
+						result += line
+				else:
+					if n_option == False:
+						result += line
+		
+		
+	return result
+	
+def d(n_option, command, result, times):
+	return result
+	
+def s(n_option, command, result, times):
+	return result
+	
+# Main function to coordinate the parsing and processing
+def main():
+	#parse arguments
+	n_option, f_option, commands = parse_arguments()
+	
+	#when -f, commands is the filename
+	if f_option == True:
+		commands_in_file = get_content(commands)
+		parsed_commands = parse_commands(commands_in_file)
+		
+	#parse commands when it is not -f
+	if f_option == False:
+		parsed_commands = parse_commands(commands)
+
+#	input_from_files = False
+	
+	#input from file
+#	if len(commands) > 1:
+#		input_from_files = True
+#		
+#		files = get_files(commands[1:])
+#	
+#	if input_from_files == True:
+#		input_content = get_content(files)
+#		if input_content[-1] != 'EOF':
+#			input_content.append('EOF')
+#	else:
+#		input_content = []
+		
+	#output location
+	stream = sys.stdout
+	result = ''
+	#variable to determine if it is the first eddy run
+	times = 0
+	#loop through all the commands and do the operation
+	for cmd in parsed_commands:
+		#print(cmd)
+		if re.search(r'q', cmd):
+			result = q(n_option, cmd, result, times)
+			break
+		elif re.search(r'p', cmd):
+			result = p(n_option, cmd, result, times)
+		elif re.search(r'd', cmd):
+			result = p(n_option, cmd, result, times)
+		elif re.search(r's', cmd):
+			result = p(n_option, cmd, result, times)
+		
+	#remove last '\n'
+	if result != None:
+		result = result.rstrip()
+		if len(result) == 0:
+			print(result, end='')
+		else:
+			print(result)
+	#output(line, n_option, stream)
+	#print(n_option, f_option, commands, parsed_commands, input_content)
+
+
+if __name__ == '__main__':
+	main()

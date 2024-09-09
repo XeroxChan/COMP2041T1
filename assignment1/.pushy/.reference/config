@@ -1,0 +1,9 @@
+[core]
+	repositoryformatversion = 0
+	fileMode = false
+	bare = false
+	logallrefupdates = true
+	worktree = /import/adams/5/z5289835/2041T1/assignment1
+[user]
+	email = pushy@example.com
+	name = pushy

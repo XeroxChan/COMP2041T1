@@ -1,0 +1,32 @@
+#!/bin/dash
+
+######################################################################################
+# Written by: Yuet Yat (Xerox) Chan					zid: z5289835
+# Date: 10/03/2024
+#
+# Usage: pushy-add <files>
+#
+# Pushy-add copy file or files to the .pushy/index directory
+#######################################################################################
+
+#if directory .pushy is not created
+if [ ! -d ".pushy" ]
+then
+	echo "pushy-add: error: pushy repository directory .pushy not found"
+	exit 1
+fi
+
+
+for file in "$@"
+do	
+	#if file to be added does not exist, print error message and exit
+	if [ ! -e "$file" ]
+	then
+		echo "pushy-add: error: can not open '$file'"
+		exit 1
+	fi
+	#add file to .pushy/index sub-directory
+	cp "$file" .pushy/index/
+done
+
+
